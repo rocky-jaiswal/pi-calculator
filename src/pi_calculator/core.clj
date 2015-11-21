@@ -4,25 +4,29 @@
              :refer [>! <! >!! <!! go chan]])
   (:gen-class))
 
-(def x 10)
-(def sums (chan x))
+(def chunk-size 400)
+(def sums (chan chunk-size))
 (def result (atom []))
 
-(defn sum [n]
-  (go
-    (println n)
-    (Thread/sleep (rand 100))
-    (>! sums (rand-int 100))))
+(defn build-range [start]
+  (range (+ 1 (* chunk-size start)) (+ 1 (* chunk-size (+ 1 start)))))
+
+(defn sum-a-chunk [seq]
+  (double (reduce + (map (fn[e] (/ (- 1 (* 2 (rem e 2))) (+ 1 (* 2 e)))) seq))))
+
+(defn calc-chunk [start]
+  (go (>! sums (sum-a-chunk (build-range start)))))
 
 (defn calc []
-  (dotimes [n x]
-    (sum n))
-  (dotimes [n x]
-    (println "waiting...")
-    (swap! result (fn [current-state] (conj current-state (<!! sums)))))
-  (println @result))
+  (dotimes [n chunk-size]
+    (calc-chunk n))
+  (dotimes [n chunk-size]
+    (swap! result (fn[current-state] (conj current-state (<!! sums)))))
+  (* 4 (+ 1 (reduce + @result))))
 
 (defn -main
-  "I don't do a whole lot ... yet."
+  "Pi Calculation."
   [& args]
-  (calc))
+  (println "Starting...")
+  (println (calc))
+  (println "Done!"))
