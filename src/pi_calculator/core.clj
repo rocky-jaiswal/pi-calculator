@@ -6,7 +6,7 @@
 
 (def chunk-size 400)
 (def sums (chan chunk-size))
-(def result (atom []))
+(def results (atom []))
 
 (defn build-range [start]
   (range (+ 1 (* chunk-size start)) (+ 1 (* chunk-size (+ 1 start)))))
@@ -14,14 +14,14 @@
 (defn sum-a-chunk [seq]
   (double (reduce + (map (fn[e] (/ (- 1 (* 2 (rem e 2))) (+ 1 (* 2 e)))) seq))))
 
-(defn calc-chunk [start]
+(defn calc-a-chunk [start]
   (go (>! sums (sum-a-chunk (build-range start)))))
 
 (defn calc []
   (dotimes [n chunk-size]
-    (calc-chunk n))
+    (calc-a-chunk n))
   (dotimes [n chunk-size]
-    (swap! result (fn[current-state] (conj current-state (<!! sums)))))
+    (swap! results (fn[current-state] (conj current-state (<!! sums)))))
   (* 4 (+ 1 (reduce + @result))))
 
 (defn -main
