@@ -10,8 +10,8 @@
 
 (defn sum [n]
   (go
-    (Thread/sleep (rand 100))
     (println n)
+    (Thread/sleep (rand 100))
     (>! sums (rand-int 100))))
 
 (defn calc []
